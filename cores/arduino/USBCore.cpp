@@ -10,6 +10,8 @@ extern "C" {
 
 #include <cassert>
 
+constexpr uint8_t txTimeout = 5;
+
 /*
  * DO NOT CHANGE THESE VALUES.
  *
@@ -182,6 +184,8 @@ void EPBuffer<L>::flush()
     if (this->len() == 0
         || USBCore().usbDev().cur_status < USBD_ADDRESSED
         || (this->ep > 0 && USBCore().usbDev().cur_status < USBD_CONFIGURED)) {
+        Serial1.print(this->ep);
+        Serial1.print("n");
         return;
     }
 
@@ -269,9 +273,10 @@ bool EPBuffer<L>::waitForWriteComplete()
             && (USBD_EPxCS(ep_num) & EPxCS_TX_ST) == EPxCS_TX_ST) {
             EPBuffers().markComplete(ep_num);
             USBD_EP_TX_ST_CLEAR(ep_num);
-        } else if (getCurrentMillis() - start > 5) {
-            EPBuffers().markComplete(ep_num);
-            return false;
+        // } else if (getCurrentMillis() - start > txTimeout) {
+        //     Serial1.print("*");
+        //     EPBuffers().markComplete(ep_num);
+        //     return false;
         }
     }
     return true;
@@ -683,6 +688,7 @@ usb_dev& USBCore_::usbDev()
 void USBCore_::transcSetup(usb_dev* usbd, uint8_t ep)
 {
     (void)ep;
+    Serial1.print("t");
 
     usb_reqsta reqstat = REQ_NOTSUPP;
 
@@ -701,14 +707,17 @@ void USBCore_::transcSetup(usb_dev* usbd, uint8_t ep)
             if (usbd->control.req.bRequest == USB_GET_DESCRIPTOR
                 && (usbd->control.req.bmRequestType & USB_RECPTYPE_MASK) == USB_RECPTYPE_DEV
                 && (usbd->control.req.wValue >> 8) == USB_DESCTYPE_CONFIG) {
+                Serial1.println("-d");
                 this->sendDeviceConfigDescriptor();
                 return;
             } else if (usbd->control.req.bRequest == USB_GET_DESCRIPTOR
                        && (usbd->control.req.bmRequestType & USB_RECPTYPE_MASK) == USB_RECPTYPE_DEV
                        && (usbd->control.req.wValue >> 8) == USB_DESCTYPE_STR) {
+                Serial1.println("-s");
                 this->sendDeviceStringDescriptor();
                 return;
             } else if ((usbd->control.req.bmRequestType & USB_RECPTYPE_MASK) == USB_RECPTYPE_ITF) {
+                Serial1.println("-i");
                 reqstat = (usb_reqsta)ClassCore::reqProcess(usbd, &usbd->control.req);
                 if (reqstat == REQ_SUPP
                     && (usbd->control.req.bmRequestType & USB_TRX_IN) != USB_TRX_IN) {
@@ -716,12 +725,14 @@ void USBCore_::transcSetup(usb_dev* usbd, uint8_t ep)
                 }
                 return;
             } else {
+                Serial1.print("-r");
                 reqstat = usbd_standard_request(usbd, &usbd->control.req);
             }
             break;
 
         /* device class request */
         case USB_REQTYPE_CLASS:
+            Serial1.println("-c");
             // Calls into class_core->req_process, does nothing else.
             reqstat = usbd_class_request(usbd, &usbd->control.req);
 
@@ -735,6 +746,7 @@ void USBCore_::transcSetup(usb_dev* usbd, uint8_t ep)
 
         /* vendor defined request */
         case USB_REQTYPE_VENDOR:
+            Serial1.println("-v");
             // Does nothing.
             reqstat = usbd_vendor_request(usbd, &usbd->control.req);
             break;

@@ -51,9 +51,12 @@ __attribute__((constructor(101))) void premain()
 int main(void)
 {
 #ifdef USBCON
+    Serial1.begin(115200);
+    Serial1.println("?");
     // TODO: remove this and only call it when the USB is attempted to
     // be used.
     USBCore().connect();
+    Serial1.println("!");
 #endif
 
     setup();

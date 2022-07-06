@@ -8,7 +8,7 @@ const uint8_t ACM_EP_MAXLEN = 0x10;
 static uint8_t IN_ENDPOINT = 0;
 
 static uint8_t cdc_flush_sof(usb_dev *usbd) {
-    USB_Flush(IN_ENDPOINT);
+    // USB_Flush(IN_ENDPOINT);
     return 0;
 }
 

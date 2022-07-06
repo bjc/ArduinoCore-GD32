@@ -138,7 +138,8 @@ tools.jlink_upload.upload.pattern="{path}/{cmd}" -s "{path}/scripts" -f interfac
 #
 # DFU_UTIL
 #
-tools.dfu-util.path={runtime.tools.dfu-util.path}
+#tools.dfu-util.path={runtime.tools.dfu-util.path}
+tools.dfu-util.path=/usr/sbin
 tools.dfu-util.cmd=dfu-util
 tools.dfu-util.upload.params.verbose=-d
 tools.dfu-util.upload.params.quiet=
